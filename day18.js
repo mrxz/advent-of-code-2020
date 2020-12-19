@@ -23,20 +23,21 @@ const tokenize = (expression) => {
     return result;
 }
 
-const precedence = true; // Part 2
+const precedence = {'+': 2, '*': 1}; // Part 2
 
-const parse = (tokens) => {
+const parse = (tokens, i = 0, opPrecedence = 0) => {
     let lhs = null;
     let op = null;
     let rhs = null;
-    let i = 0;
     while(i < tokens.length) {
-        //console.log(i, lhs, op, rhs);
+        console.log(i, lhs, op, rhs, opPrecedence);
+        console.log(tokens.join(''));
+        console.log(' '.repeat(i) + '^');
+
         // Need a lhs
         if(lhs === null) {
             if(tokens[i] === '(') {
-                [offset, lhs] = parse(tokens.slice(i + 1));
-                i += offset;
+                [i, lhs] = parse(tokens, i + 1);
             } else if(Number.isInteger(tokens[i])) {
                 lhs = tokens[i];
             } else {
@@ -45,53 +46,31 @@ const parse = (tokens) => {
         } else if(op === null) {
             // Expect an operator
             if(tokens[i] === "*" || tokens[i] === "+") {
+                if(opPrecedence >= precedence[tokens[i]]) {
+                    return [i - 1, lhs];
+                }
                 op = tokens[i];
             } else if(tokens[i] === ")") {
-                if(rhs === null) {
-                    return [i + 1, lhs];
-                } else {
-                    return [i + 1, [lhs, '*', rhs]];
-                }
+                console.log('reached closing bracket')
+                return [i - (opPrecedence === 0 ? 0 : 1), lhs];
             } else {
                 throw "PARSING FAILED: expected operator, got: " + tokens[i];
             }
         } else {
             // Need a rhs
-            let newRhs;
-            if(tokens[i] === '(') {
-                [offset, newRhs] = parse(tokens.slice(i + 1));
-                i += offset;
-            } else if(Number.isInteger(tokens[i])) {
-                newRhs = tokens[i];
-            } else {
-                throw "PARSING FAILED: expected rhs value, got: " + tokens[i];
-            }
-            
-            if(rhs === null) {
-                rhs = newRhs;
-            } else {
-                rhs = [rhs, op, newRhs];
-                op = null;
-            }
+            [i, rhs] = parse(tokens, i, precedence[op]);
+            //if(tokens[i] === ')') i--;
             
             // Reduce
-            //if(op === '+') {
-                lhs = [lhs, op, rhs];
-                op = rhs = null;
-            //} else {
-            //    op = null;
-            //}
-                
+            lhs = [lhs, op, rhs];
+            op = rhs = null;
         }
         
         i++;
     }
     
-    if(rhs === null) {
-        return [i, lhs];
-    } else {
-        return [i, [lhs, '*', rhs]];
-    }
+    console.log('reached end');
+    return [i, lhs];
 }
 
 const evaluate = (ast) => {
@@ -104,6 +83,14 @@ const evaluate = (ast) => {
     } else {
         return evaluate(ast[0]) * evaluate(ast[2]);
     }
+}
+
+const print = (ast) => {
+    if(Number.isInteger(ast)) {
+        return ast;
+    }
+    
+    return "(" + print(ast[0]) + " " + ast[1] + " " + print(ast[2]) + ")";
 }
 
 
@@ -483,12 +470,23 @@ const input = [
 "8 * 7 * (3 * 4 + 6 + 2 * 9 + 9) * 3 + (3 + 5)",
 ]
 
+
 const sum = input.map(x => {
     const ast = parse(tokenize(x))[1];
     return evaluate(ast);
 }).reduce((a,b) => a+b);
-console.log(sum);
+console.log(sum);/** /
 
+//const x = "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"
+//const x = "2 * (2 + 2 * 3 + 2) + 1"
 const x = "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"
-console.log(JSON.stringify(parse(tokenize(x))[1]));
-console.log(evaluate(parse(tokenize(x))[1]));
+//const x = "2 * (6 + 9 * 8 + 6) + 6"
+
+const ast = parse(tokenize(x))[1];
+console.log(evaluate(ast));
+console.log(print(ast));
+console.log("((((((2 + 4) * 9) * (((6 + 9) * (8 + 6)) + 6)) + 2) + 4) * 2)");
+console.log(x);
+((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2
+
+/**/
