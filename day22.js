@@ -1,4 +1,4 @@
-const input = [
+let input = [
 "Player 1:",
 "30",
 "42",
@@ -54,6 +54,33 @@ const input = [
 "49",
 ]
 
+input2 = [
+"Player 1:",
+"9",
+"2",
+"6",
+"3",
+"1",
+"",
+"Player 2:",
+"5",
+"8",
+"4",
+"7",
+"10"
+]
+
+input3 = [
+"Player 1:",
+"43",
+"19",
+"",
+"Player 2:",
+"2",
+"29",
+"14",
+]
+
 const decks = [[], null];
 input.forEach(line => {
     if(line === "") {
@@ -67,24 +94,47 @@ input.forEach(line => {
     }
 });
 
-
-// Rounds
-let round = 1;
-while(decks[0].length && decks[1].length) {
-    console.log(round, decks[0], decks[1]);
-    
-    // Draw cards
-    cards = [...decks[0].splice(0, 1), ...decks[1].splice(0, 1)];
-    console.log(cards);
-    if(cards[0] > cards[1]) {
-        decks[0].splice(decks[0].length, 0, ...cards);
-    } else {
-        decks[1].splice(decks[1].length, 0, cards[1], cards[0]);
+const playRound = (decks, cards, level) => {
+    //console.log(level + cards);
+    if(decks[0].length >= cards[0] && decks[1].length >= cards[1]) {
+        // Recursion;
+        return play([[...decks[0].slice(0, cards[0])], [...decks[1].slice(0, cards[1])]], level + "\t");
     }
-    
-    round++;
-    //break;
+    return cards[0] > cards[1] ? 0 : 1;
 }
 
-const score = (decks[0].length ? decks[0] : decks[1]).reverse().map((x, i) => x * (i + 1)).reduce((a,b) => a+b);
+const play = (decks, level = "") => {
+    let round = 1;
+    const rounds = {};
+    while(decks[0].length && decks[1].length) {
+        const key = decks[0].join(',') + "|" + decks[1].join(",");
+        if(rounds[key]) {
+            console.log("Round observed before in this game, letting player 1 win");
+            return 0; // Player one wins if round is the same as before;
+        }
+        rounds[key] = true;
+        
+        //console.log(level + round, decks[0], decks[1]);
+        const cards = [...decks[0].splice(0, 1), ...decks[1].splice(0, 1)];
+        const roundWinner = playRound(decks, cards, level);
+        if(roundWinner) {
+            decks[roundWinner].splice(decks[roundWinner].length, 0, cards[1], cards[0]);
+        } else {
+            decks[roundWinner].splice(decks[roundWinner].length, 0, cards[0], cards[1]);
+        }
+        
+        round++;
+    }
+    
+    // Determine winner
+    if(decks[0].length) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+// Rounds
+const winner = play(decks);
+const score = decks[winner].reverse().map((x, i) => x * (i + 1)).reduce((a,b) => a+b);
 console.log(score);
