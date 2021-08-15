@@ -1,0 +1,2 @@
+# Advent of Code 2020
+This repository contains my solutions for the [advent of code 2020](https://adventofcode.com/2020). People have various goals when partaking in this annual event, be it learning a new language, sharpening their skills, trying out TDD or something else. This year my focus was once again on solving the problems as quickly as possible. The resulting code is not always the nicest and might even output only parts of the answers (in case the final answer can be trivially derived)
